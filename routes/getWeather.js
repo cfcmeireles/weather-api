@@ -1,6 +1,3 @@
-const express = require('express')
-const app = express()
-const port = 3000
 const request = require('request');
 
 const getWeather = async (req, res) => {
