@@ -12,6 +12,10 @@ const getWeather = (req, res) => {
         console.error("Request error:", error);
         return;
       }
+      if (response.statusCode !== 200) {
+        console.error("HTTP error:", response.statusCode);
+        return;
+      }
       try {
         const data = JSON.parse(body);
         res.send(
