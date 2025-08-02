@@ -8,7 +8,7 @@ const getWeather = (req, res) => {
   request(
     `${url}${city}?key=${process.env.API_KEY}`,
     (error, response, body) => {
-      if (error) {
+      if (response.statusCode !== 200) {
         console.error("Request error:", error);
         return;
       }
