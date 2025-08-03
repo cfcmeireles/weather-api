@@ -1,4 +1,5 @@
 const request = require("request");
+const client = require("../redis-client");
 
 const getWeather = (req, res) => {
   const city = req.params.city;
@@ -7,8 +8,8 @@ const getWeather = (req, res) => {
 
   request(
     `${url}${city}?key=${process.env.API_KEY}`,
-    (error, response, body) => {
-      if (response.statusCode !== 200) {
+    async (error, response, body) => {
+      if (error) {
         console.error("Request error:", error);
         return;
       }
@@ -18,6 +19,10 @@ const getWeather = (req, res) => {
       }
       try {
         const data = JSON.parse(body);
+        // Set data to Redis
+        await client.set(city, data.currentConditions.temp, {
+          EX: 3600,
+        });
         res.send(
           `The current temperature in ${city} is ${data.currentConditions.temp}ºF`
         );
@@ -27,5 +32,25 @@ const getWeather = (req, res) => {
     }
   );
 };
+// Cache middleware
+const cache = async (req, res, next) => {
+  const city = req.params.city;
 
-module.exports = getWeather;
+  try {
+    const data = await client.get(city);
+    if (data) {
+      return res.send(
+        `The current temperature in ${city} is ${data}ºF (from cache)`
+      );
+    }
+    next();
+  } catch (err) {
+    console.error("Redis error:", err);
+    next();
+  }
+};
+
+module.exports = {
+  getWeather,
+  cache,
+};
