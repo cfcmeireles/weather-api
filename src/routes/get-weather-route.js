@@ -1,36 +1,31 @@
-const request = require("request");
 const client = require("../services/redis-client");
+const axios = require("axios");
 
-const getWeather = (req, res) => {
+const getWeather = async (req, res) => {
   const city = req.params.city;
   const url =
     "https://weather.visualcrossing.com/VisualCrossingWebServices/rest/services/timeline/";
 
-  request(
-    `${url}${city}?key=${process.env.API_KEY}`,
-    async (error, response, body) => {
-      if (error) {
-        console.error("Request error:", error);
-        return;
-      }
-      if (response.statusCode !== 200) {
-        console.error("HTTP error:", response.statusCode);
-        return;
-      }
-      try {
-        const data = JSON.parse(body);
-        // Set data to Redis
-        await client.set(city, data.currentConditions.temp, {
-          EX: 3600,
-        });
-        res.send(
-          `The current temperature in ${city} is ${data.currentConditions.temp}ºF`
-        );
-      } catch (err) {
-        console.error("Error:", err);
-      }
+  try {
+    const response = await axios.get(`${url}${city}`, {
+      params: {
+        key: `${process.env.API_KEY}`,
+        q: city,
+      },
+    });
+
+    // Set data to Redis
+    await client.set(city, JSON.stringify(response.data), {
+      EX: 43200,
+    });
+
+    return res.json(response.data);
+  } catch (error) {
+    if (error.response.status === 400) {
+      return res.status(400).json({ error: "Invalid city/city code." });
     }
-  );
+    return res.status(500).json({ error: "Invalid Internal server error." });
+  }
 };
 
 module.exports = getWeather;

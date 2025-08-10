@@ -5,8 +5,9 @@ const app = express();
 
 const getWeather = require("./routes/get-weather-route");
 const cache = require("./middleware/cache-middleware");
+const limiter = require("./middleware/rate-limit");
 
-app.use("/weather/:city", cache, getWeather);
+app.get("/weather/:city", limiter, cache, getWeather);
 
 app.listen(port, () => {
   console.log(`Server running on port ${port}`);

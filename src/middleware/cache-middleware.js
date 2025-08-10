@@ -6,9 +6,7 @@ const cache = async (req, res, next) => {
   try {
     const data = await client.get(city);
     if (data) {
-      return res.send(
-        `The current temperature in ${city} is ${data}ºF (from cache)`
-      );
+      return res.send(JSON.parse(data));
     }
     next();
   } catch (err) {
