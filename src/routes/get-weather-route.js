@@ -10,7 +10,6 @@ const getWeather = async (req, res) => {
     const response = await axios.get(`${url}${city}`, {
       params: {
         key: `${process.env.API_KEY}`,
-        q: city,
       },
     });
 
